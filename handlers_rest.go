@@ -149,7 +149,7 @@ var RestFunc = func(w http.ResponseWriter, r *http.Request) {
 		RequestWrites[appId] += 1
 	}
 
-	dbo, err := GetDbo(appId)
+	dbo, err := Websql.getDbo(appId)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		fmt.Fprint(w, fmt.Sprintf(`{"err":"%v"}`, err))

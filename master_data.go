@@ -125,7 +125,7 @@ func (this *MasterData) AddDataNode(dataNode *DataNode) error {
 	}
 	this.DataNodes = append(this.DataNodes, dataNode)
 	this.Version++
-	return masterData.Propagate()
+	return Websql.masterData.Propagate()
 }
 func (this *MasterData) RemoveDataNode(id string) error {
 	index := -1
@@ -143,7 +143,7 @@ func (this *MasterData) RemoveDataNode(id string) error {
 	this.DataNodes = this.DataNodes[:len(this.DataNodes)-1]
 	//	this.DataNodes = append(this.DataNodes[:index], this.DataNodes[index+1:]...)
 	this.Version++
-	return masterData.Propagate()
+	return Websql.masterData.Propagate()
 }
 func (this *MasterData) UpdateDataNode(dataNode *DataNode) error {
 	for i, v := range this.DataNodes {
@@ -168,7 +168,7 @@ func (this *MasterData) UpdateDataNode(dataNode *DataNode) error {
 			}
 			this.DataNodes[i] = v
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("Data node not found: " + dataNode.Name)
@@ -209,7 +209,7 @@ func (this *MasterData) AddApp(app *App) error {
 	}
 	this.Apps = append(this.Apps, app)
 	this.Version++
-	return masterData.Propagate()
+	return Websql.masterData.Propagate()
 }
 func (this *MasterData) RemoveApp(id string) error {
 	index := -1
@@ -231,7 +231,7 @@ func (this *MasterData) RemoveApp(id string) error {
 	this.Apps = this.Apps[:len(this.Apps)-1]
 	//	this.Apps = append(this.Apps[:index], this.Apps[index+1:]...)
 	this.Version++
-	return masterData.Propagate()
+	return Websql.masterData.Propagate()
 }
 func (this *MasterData) UpdateApp(app *App) error {
 	iApp := -1
@@ -270,7 +270,7 @@ func (this *MasterData) UpdateApp(app *App) error {
 	vApp.OnAppCreateOrUpdate()
 	this.Apps[iApp] = vApp
 	this.Version++
-	return masterData.Propagate()
+	return Websql.masterData.Propagate()
 }
 func (this *MasterData) ListApps(mode string) string {
 	var buffer bytes.Buffer
@@ -300,7 +300,7 @@ func (this *MasterData) AddQuery(query *Query) error {
 				return err
 			}
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("App does not exist: " + query.AppId)
@@ -315,7 +315,7 @@ func (this *MasterData) RemoveQuery(id string, appId string) error {
 					this.Apps[iApp].Queries = this.Apps[iApp].Queries[:len(this.Apps[iApp].Queries)-1]
 					//					this.Apps[iApp].Queries = append(this.Apps[iApp].Queries[:iQuery], this.Apps[iApp].Queries[iQuery+1:]...)
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -345,7 +345,7 @@ func (this *MasterData) UpdateQuery(query *Query) error {
 						return err
 					}
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -365,7 +365,7 @@ func (this *MasterData) ReloadAllQueries(appId string) error {
 				}
 			}
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return nil
@@ -384,7 +384,7 @@ func (this *MasterData) AddJob(job *Job) error {
 			}
 			this.Apps[iApp].Jobs = append(this.Apps[iApp].Jobs, job)
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("App does not exist: " + job.AppId)
@@ -402,7 +402,7 @@ func (this *MasterData) RemoveJob(id string, appId string) error {
 					this.Apps[iApp].Jobs = this.Apps[iApp].Jobs[:len(this.Apps[iApp].Jobs)-1]
 					//					this.Apps[iApp].Jobs = append(this.Apps[iApp].Jobs[:iJob], this.Apps[iApp].Jobs[iJob+1:]...)
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -438,7 +438,7 @@ func (this *MasterData) UpdateJob(job *Job) error {
 					}
 					this.Apps[iApp].Jobs[iJob] = vJob
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -479,7 +479,7 @@ func (this *MasterData) AddToken(token *Token) error {
 			}
 			this.Apps[iApp].Tokens = append(this.Apps[iApp].Tokens, token)
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("App does not exist: " + token.AppId)
@@ -494,7 +494,7 @@ func (this *MasterData) RemoveToken(id string, appId string) error {
 					this.Apps[iApp].Tokens = this.Apps[iApp].Tokens[:len(this.Apps[iApp].Tokens)-1]
 					//					this.Apps[iApp].Tokens = append(this.Apps[iApp].Tokens[:iToken], this.Apps[iApp].Tokens[iToken+1:]...)
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -521,7 +521,7 @@ func (this *MasterData) UpdateToken(token *Token) error {
 
 					this.Apps[iApp].Tokens[iToken] = vToken
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -539,7 +539,7 @@ func (this *MasterData) AddLI(li *LocalInterceptor) error {
 			}
 			this.Apps[iApp].LocalInterceptors = append(this.Apps[iApp].LocalInterceptors, li)
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("App does not exist: " + li.AppId)
@@ -554,7 +554,7 @@ func (this *MasterData) RemoveLI(id string, appId string) error {
 					this.Apps[iApp].LocalInterceptors = this.Apps[iApp].LocalInterceptors[:len(this.Apps[iApp].LocalInterceptors)-1]
 					//					this.Apps[iApp].LocalInterceptors = append(this.Apps[iApp].LocalInterceptors[:iLi], this.Apps[iApp].LocalInterceptors[iLi+1:]...)
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -583,7 +583,7 @@ func (this *MasterData) UpdateLI(li *LocalInterceptor) error {
 					}
 					this.Apps[iApp].LocalInterceptors[iLi] = vLi
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -601,7 +601,7 @@ func (this *MasterData) AddRI(ri *RemoteInterceptor) error {
 			}
 			this.Apps[iApp].RemoteInterceptors = append(this.Apps[iApp].RemoteInterceptors, ri)
 			this.Version++
-			return masterData.Propagate()
+			return Websql.masterData.Propagate()
 		}
 	}
 	return errors.New("App does not exist: " + ri.AppId)
@@ -616,7 +616,7 @@ func (this *MasterData) RemoveRI(id string, appId string) error {
 					this.Apps[iApp].RemoteInterceptors = this.Apps[iApp].RemoteInterceptors[:len(this.Apps[iApp].RemoteInterceptors)-1]
 					//					this.Apps[iApp].RemoteInterceptors = append(this.Apps[iApp].RemoteInterceptors[:iRi], this.Apps[iApp].RemoteInterceptors[iRi+1:]...)
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -654,7 +654,7 @@ func (this *MasterData) UpdateRI(ri *RemoteInterceptor) error {
 					}
 					this.Apps[iApp].RemoteInterceptors[iRi] = vRi
 					this.Version++
-					return masterData.Propagate()
+					return Websql.masterData.Propagate()
 				}
 			}
 		}
@@ -663,18 +663,18 @@ func (this *MasterData) UpdateRI(ri *RemoteInterceptor) error {
 }
 
 func AddApiNode(apiNode *ApiNode) error {
-	for _, v := range apiNodes {
+	for _, v := range Websql.apiNodes {
 		if v.Name == apiNode.Name {
 			return errors.New("API node existed: " + apiNode.Name)
 		}
 	}
-	apiNodes = append(apiNodes, apiNode)
+	Websql.apiNodes = append(Websql.apiNodes, apiNode)
 	return nil
 }
 
 func RemoveApiNode(remoteAddr string) error {
 	index := -1
-	for i, v := range apiNodes {
+	for i, v := range Websql.apiNodes {
 		if v.Name == remoteAddr {
 			index = i
 			break
@@ -683,18 +683,18 @@ func RemoveApiNode(remoteAddr string) error {
 	if index == -1 {
 		return errors.New("API node not found: " + remoteAddr)
 	}
-	copy(apiNodes[index:], apiNodes[index+1:])
-	apiNodes[len(apiNodes)-1] = nil
-	apiNodes = apiNodes[:len(apiNodes)-1]
+	copy(Websql.apiNodes[index:], Websql.apiNodes[index+1:])
+	Websql.apiNodes[len(Websql.apiNodes)-1] = nil
+	Websql.apiNodes = Websql.apiNodes[:len(Websql.apiNodes)-1]
 	//	apiNodes = append(apiNodes[:index], apiNodes[index+1:]...)
 	return nil
 }
 
 func (this *Query) Reload() error {
 	var app *App = nil
-	for iApp, vApp := range masterData.Apps {
+	for iApp, vApp := range Websql.masterData.Apps {
 		if this.AppId == vApp.Id {
-			app = masterData.Apps[iApp]
+			app = Websql.masterData.Apps[iApp]
 			break
 		}
 	}

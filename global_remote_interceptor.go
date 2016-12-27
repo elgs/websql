@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterGlobalDataInterceptor(20, &GlobalRemoteInterceptor{Id: "GlobalRemoteInterceptor"})
+	Websql.interceptors.RegisterGlobalDataInterceptor(20, &GlobalRemoteInterceptor{Id: "GlobalRemoteInterceptor"})
 }
 
 type GlobalRemoteInterceptor struct {
@@ -27,7 +27,7 @@ func (this *GlobalRemoteInterceptor) executeRemoteInterceptor(tx *sql.Tx, db *sq
 	}
 	clientData := string(res)
 
-	sqlScript, err := getQueryText(appId, ri.Callback)
+	sqlScript, err := Websql.getQueryText(appId, ri.Callback)
 	if err != nil {
 		return err
 	}

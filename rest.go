@@ -21,22 +21,22 @@ func serve(service *CliService) {
 		urlPath := r.URL.Path
 		var dataHandler func(w http.ResponseWriter, r *http.Request)
 		if strings.HasPrefix(urlPath, "/api/") {
-			dataHandler = GetHandler("/api")
+			dataHandler = Websql.handlers.GetHandler("/api")
 		} else {
-			dataHandler = GetHandler(urlPath)
+			dataHandler = Websql.handlers.GetHandler(urlPath)
 		}
 		if dataHandler == nil {
 			http.Error(w, "Not found.", http.StatusNotFound)
 			return
 		}
-		for _, globalHandlerInterceptor := range GlobalHandlerInterceptorRegistry {
+		for _, globalHandlerInterceptor := range Websql.interceptors.GlobalHandlerInterceptorRegistry {
 			err := globalHandlerInterceptor.BeforeHandle(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
-		handlerInterceptor := HandlerInterceptorRegistry[urlPath]
+		handlerInterceptor := Websql.interceptors.HandlerInterceptorRegistry[urlPath]
 		if handlerInterceptor != nil {
 			err := handlerInterceptor.BeforeHandle(w, r)
 			if err != nil {
@@ -52,7 +52,7 @@ func serve(service *CliService) {
 				return
 			}
 		}
-		for _, globalHandlerInterceptor := range GlobalHandlerInterceptorRegistry {
+		for _, globalHandlerInterceptor := range Websql.interceptors.GlobalHandlerInterceptorRegistry {
 			err := globalHandlerInterceptor.AfterHandle(w, r)
 			if err != nil {
 				fmt.Fprint(w, err.Error())

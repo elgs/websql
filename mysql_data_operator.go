@@ -25,7 +25,7 @@ func (this *MySqlDataOperator) Load(tableId string, id string, fields string, co
 	tableId = normalizeTableId(tableId, this.DbType, this.Ds)
 	db, err := this.GetConn()
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeLoad(tableId, db, fields, context, id)
@@ -33,7 +33,7 @@ func (this *MySqlDataOperator) Load(tableId string, id string, fields string, co
 			return ret, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -99,7 +99,7 @@ func (this *MySqlDataOperator) ListMap(tableId string, fields string, filter []s
 	sort = parseSort(sort)
 	where := parseFilters(filter)
 	//	fmt.Println(where)
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeListMap(tableId, db, fields, context, &where, &sort, &group, start, limit)
@@ -107,7 +107,7 @@ func (this *MySqlDataOperator) ListMap(tableId string, fields string, filter []s
 			return ret, -1, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -168,7 +168,7 @@ func (this *MySqlDataOperator) ListArray(tableId string, fields string, filter [
 
 	sort = parseSort(sort)
 	where := parseFilters(filter)
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeListArray(tableId, db, fields, context, &where, &sort, &group, start, limit)
@@ -176,7 +176,7 @@ func (this *MySqlDataOperator) ListArray(tableId string, fields string, filter [
 			return nil, nil, -1, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -226,7 +226,7 @@ func (this *MySqlDataOperator) Create(tableId string, data []map[string]interfac
 	tableId = normalizeTableId(tableId, this.DbType, this.Ds)
 	db, err := this.GetConn()
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeCreate(tableId, db, context, data)
@@ -237,7 +237,7 @@ func (this *MySqlDataOperator) Create(tableId string, data []map[string]interfac
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -324,7 +324,7 @@ func (this *MySqlDataOperator) Update(tableId string, data []map[string]interfac
 	tableId = normalizeTableId(tableId, this.DbType, this.Ds)
 	db, err := this.GetConn()
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeUpdate(tableId, db, context, data)
@@ -335,7 +335,7 @@ func (this *MySqlDataOperator) Update(tableId string, data []map[string]interfac
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -452,7 +452,7 @@ func (this *MySqlDataOperator) Duplicate(tableId string, id []string, context ma
 	tableId = normalizeTableId(tableId, this.DbType, this.Ds)
 	db, err := this.GetConn()
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeDuplicate(tableId, db, context, id)
@@ -463,7 +463,7 @@ func (this *MySqlDataOperator) Duplicate(tableId string, id []string, context ma
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -591,7 +591,7 @@ func (this *MySqlDataOperator) Delete(tableId string, id []string, context map[s
 	tableId = normalizeTableId(tableId, this.DbType, this.Ds)
 	db, err := this.GetConn()
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeDelete(tableId, db, context, id)
@@ -602,7 +602,7 @@ func (this *MySqlDataOperator) Delete(tableId string, id []string, context map[s
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {

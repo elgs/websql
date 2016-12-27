@@ -11,9 +11,9 @@ import (
 
 func (this *App) OnAppCreateOrUpdate() error {
 	var dn *DataNode = nil
-	for iDn, vDn := range masterData.DataNodes {
+	for iDn, vDn := range Websql.masterData.DataNodes {
 		if this.DataNodeId == vDn.Id {
-			dn = masterData.DataNodes[iDn]
+			dn = Websql.masterData.DataNodes[iDn]
 			break
 		}
 	}
@@ -45,9 +45,9 @@ func (this *App) OnAppCreateOrUpdate() error {
 
 func (this *App) OnAppRemove() error {
 	var dn *DataNode = nil
-	for iDn, vDn := range masterData.DataNodes {
+	for iDn, vDn := range Websql.masterData.DataNodes {
 		if this.DataNodeId == vDn.Id {
-			dn = masterData.DataNodes[iDn]
+			dn = Websql.masterData.DataNodes[iDn]
 			break
 		}
 	}

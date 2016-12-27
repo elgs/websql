@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	RegisterGlobalDataInterceptor(0, &GlobalTokenInterceptor{Id: "GlobalTokenInterceptor"})
+	Websql.interceptors.RegisterGlobalDataInterceptor(0, &GlobalTokenInterceptor{Id: "GlobalTokenInterceptor"})
 }
 
 type GlobalTokenInterceptor struct {
@@ -51,7 +51,7 @@ func checkProjectToken(context map[string]interface{}, tableId string, op string
 	token := context["api_token"].(string)
 	if _, ok := context["app"]; !ok {
 		appId := context["app_id"].(string)
-		for _, a := range masterData.Apps {
+		for _, a := range Websql.masterData.Apps {
 			if a.Id == appId {
 				context["app"] = a
 				break
@@ -77,7 +77,7 @@ func checkProjectToken(context map[string]interface{}, tableId string, op string
 func checkUserToken(context map[string]interface{}) error {
 	if userToken, ok := context["user_token"]; ok {
 		if v, ok := userToken.(string); ok {
-			sharedKey := []byte(service.Secret)
+			sharedKey := []byte(Websql.service.Secret)
 
 			payload, _, err := jose.Decode(v, sharedKey)
 			if err != nil {
@@ -201,9 +201,9 @@ func (this *GlobalTokenInterceptor) AfterListArray(resourceId string, db *sql.DB
 }
 func (this *GlobalTokenInterceptor) BeforeExec(resourceId string, script string, params *[][]interface{}, queryParams map[string]string, array bool, db *sql.DB, context map[string]interface{}) error {
 	if appId, ok := context["app_id"].(string); ok {
-		for iApp, _ := range masterData.Apps {
-			if masterData.Apps[iApp].Id == appId {
-				for _, vQuery := range masterData.Apps[iApp].Queries {
+		for iApp, _ := range Websql.masterData.Apps {
+			if Websql.masterData.Apps[iApp].Id == appId {
+				for _, vQuery := range Websql.masterData.Apps[iApp].Queries {
 					if vQuery.Name == resourceId && vQuery.AppId == appId {
 						if vQuery.Mode != "public" {
 							err := checkUserToken(context)

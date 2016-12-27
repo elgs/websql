@@ -16,7 +16,7 @@ import (
 
 func sendCliCommand(node string, command *Command, attachSecret bool) ([]byte, error) {
 	if attachSecret {
-		command.Secret = service.Secret
+		command.Secret = Websql.service.Secret
 	}
 	message, err := json.Marshal(command)
 	if err != nil {
@@ -43,7 +43,7 @@ func sendCliCommand(node string, command *Command, attachSecret bool) ([]byte, e
 }
 
 func RegisterToMaster(wsDrop chan bool) error {
-	c, _, err := websocket.DefaultDialer.Dial("wss://"+service.Master+"/sys/ws", nil)
+	c, _, err := websocket.DefaultDialer.Dial("wss://"+Websql.service.Master+"/sys/ws", nil)
 	if err != nil {
 		log.Println(err)
 		time.Sleep(time.Second * 5)
@@ -51,7 +51,7 @@ func RegisterToMaster(wsDrop chan bool) error {
 		return err
 	}
 
-	serviceBytes, err := json.Marshal(service)
+	serviceBytes, err := json.Marshal(Websql.service)
 	if err != nil {
 		log.Println(err)
 		time.Sleep(time.Second * 5)
@@ -77,7 +77,7 @@ func RegisterToMaster(wsDrop chan bool) error {
 		return errors.New(regResult)
 	}
 
-	slaveConn = c
+	Websql.slaveConn = c
 	go func() {
 		defer c.Close()
 		defer func() { wsDrop <- true }()
@@ -96,7 +96,7 @@ func RegisterToMaster(wsDrop chan bool) error {
 		}
 	}()
 
-	log.Println("Connected to master:", service.Master)
+	log.Println("Connected to master:", Websql.service.Master)
 	return nil
 }
 
@@ -110,7 +110,7 @@ func processWsCommandSlave(conn *websocket.Conn, message []byte) error {
 		if err != nil {
 			return err
 		}
-		return json.Unmarshal([]byte(masterCommand.Data), &masterData)
+		return json.Unmarshal([]byte(masterCommand.Data), Websql.masterData)
 	}
 	return nil
 }

@@ -6,22 +6,22 @@ import (
 	"errors"
 )
 
-func processCliCommand(message []byte) (string, error) {
+func (this *WebSQL) processCliCommand(message []byte) (string, error) {
 	cliCommand := &Command{}
 	json.Unmarshal(message, cliCommand)
-	if service.Secret != cliCommand.Secret {
+	if this.service.Secret != cliCommand.Secret {
 		return "", errors.New("Failed to validate secret.")
 	}
 	switch cliCommand.Type {
 	case "CLI_DN_LIST":
-		return masterData.ListDataNodes(cliCommand.Data), nil
+		return this.masterData.ListDataNodes(cliCommand.Data), nil
 	case "CLI_DN_ADD":
 		dataNode := &DataNode{}
 		err := json.Unmarshal([]byte(cliCommand.Data), dataNode)
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddDataNode(dataNode)
+		err = this.masterData.AddDataNode(dataNode)
 		if err != nil {
 			return "", err
 		}
@@ -31,24 +31,24 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateDataNode(dataNode)
+		err = this.masterData.UpdateDataNode(dataNode)
 		if err != nil {
 			return "", err
 		}
 	case "CLI_DN_REMOVE":
-		err := masterData.RemoveDataNode(cliCommand.Data)
+		err := this.masterData.RemoveDataNode(cliCommand.Data)
 		if err != nil {
 			return "", err
 		}
 	case "CLI_APP_LIST":
-		return masterData.ListApps(cliCommand.Data), nil
+		return this.masterData.ListApps(cliCommand.Data), nil
 	case "CLI_APP_ADD":
 		app := &App{}
 		err := json.Unmarshal([]byte(cliCommand.Data), app)
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddApp(app)
+		err = this.masterData.AddApp(app)
 		if err != nil {
 			return "", err
 		}
@@ -58,12 +58,12 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateApp(app)
+		err = this.masterData.UpdateApp(app)
 		if err != nil {
 			return "", err
 		}
 	case "CLI_APP_REMOVE":
-		err := masterData.RemoveApp(cliCommand.Data)
+		err := this.masterData.RemoveApp(cliCommand.Data)
 		if err != nil {
 			return "", err
 		}
@@ -73,7 +73,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddQuery(query)
+		err = this.masterData.AddQuery(query)
 		if err != nil {
 			return "", err
 		}
@@ -83,12 +83,12 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateQuery(query)
+		err = this.masterData.UpdateQuery(query)
 		if err != nil {
 			return "", err
 		}
 	case "CLI_QUERY_RELOAD_ALL":
-		err := masterData.ReloadAllQueries(cliCommand.Data)
+		err := this.masterData.ReloadAllQueries(cliCommand.Data)
 		if err != nil {
 			return "", err
 		}
@@ -98,7 +98,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RemoveQuery(query.Id, query.AppId)
+		err = this.masterData.RemoveQuery(query.Id, query.AppId)
 		if err != nil {
 			return "", err
 		}
@@ -108,7 +108,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddJob(job)
+		err = this.masterData.AddJob(job)
 		if err != nil {
 			return "", err
 		}
@@ -118,7 +118,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateJob(job)
+		err = this.masterData.UpdateJob(job)
 		if err != nil {
 			return "", err
 		}
@@ -128,7 +128,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RemoveJob(job.Id, job.AppId)
+		err = this.masterData.RemoveJob(job.Id, job.AppId)
 		if err != nil {
 			return "", err
 		}
@@ -138,7 +138,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.StartJob(job)
+		err = this.masterData.StartJob(job)
 		if err != nil {
 			return "", err
 		}
@@ -148,7 +148,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RestartJob(job)
+		err = this.masterData.RestartJob(job)
 		if err != nil {
 			return "", err
 		}
@@ -158,7 +158,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.StopJob(job)
+		err = this.masterData.StopJob(job)
 		if err != nil {
 			return "", err
 		}
@@ -168,7 +168,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddToken(token)
+		err = this.masterData.AddToken(token)
 		if err != nil {
 			return "", err
 		}
@@ -178,7 +178,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateToken(token)
+		err = this.masterData.UpdateToken(token)
 		if err != nil {
 			return "", err
 		}
@@ -188,7 +188,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RemoveToken(token.Id, token.AppId)
+		err = this.masterData.RemoveToken(token.Id, token.AppId)
 		if err != nil {
 			return "", err
 		}
@@ -198,7 +198,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddLI(li)
+		err = this.masterData.AddLI(li)
 		if err != nil {
 			return "", err
 		}
@@ -208,7 +208,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateLI(li)
+		err = this.masterData.UpdateLI(li)
 		if err != nil {
 			return "", err
 		}
@@ -218,7 +218,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RemoveLI(li.Id, li.AppId)
+		err = this.masterData.RemoveLI(li.Id, li.AppId)
 		if err != nil {
 			return "", err
 		}
@@ -228,7 +228,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.AddRI(ri)
+		err = this.masterData.AddRI(ri)
 		if err != nil {
 			return "", err
 		}
@@ -238,7 +238,7 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.UpdateRI(ri)
+		err = this.masterData.UpdateRI(ri)
 		if err != nil {
 			return "", err
 		}
@@ -248,24 +248,24 @@ func processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = masterData.RemoveRI(ri.Id, ri.AppId)
+		err = this.masterData.RemoveRI(ri.Id, ri.AppId)
 		if err != nil {
 			return "", err
 		}
 	case "CLI_SHOW_MASTER":
-		masterDataBytes, err := json.Marshal(masterData)
+		masterDataBytes, err := json.Marshal(this.masterData)
 		if err != nil {
 			return "", err
 		}
 		return string(masterDataBytes), nil
 	case "CLI_SHOW_API_NODES":
-		apiNodesBytes, err := json.Marshal(apiNodes)
+		apiNodesBytes, err := json.Marshal(this.apiNodes)
 		if err != nil {
 			return "", err
 		}
 		return string(apiNodesBytes), nil
 	case "CLI_PROPAGATE":
-		err := masterData.Propagate()
+		err := this.masterData.Propagate()
 		if err != nil {
 			return "", err
 		}

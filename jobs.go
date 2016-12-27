@@ -25,7 +25,7 @@ func (this *Job) Action(mode string) func() {
 		appId := this.AppId
 		loopScript := this.LoopScriptText
 
-		dbo, err := GetDbo(appId)
+		dbo, err := Websql.getDbo(appId)
 		if err != nil {
 			log.Println(err)
 			return
@@ -100,12 +100,12 @@ func (this *Job) Action(mode string) func() {
 	}
 }
 
-var Sched *cron.Cron
-var jobStatus = make(map[string]int)
+//var Sched *cron.Cron
+//var jobStatus = make(map[string]int)
 
-func StartJobs() {
-	Sched = cron.New()
-	for _, app := range masterData.Apps {
+func (this *WebSQL) StartJobs() {
+	this.Sched = cron.New()
+	for _, app := range this.masterData.Apps {
 		for _, job := range app.Jobs {
 			if job.AutoStart == 1 {
 				err := job.Start()
@@ -116,22 +116,22 @@ func StartJobs() {
 			}
 		}
 	}
-	Sched.Start()
+	this.Sched.Start()
 }
 
 func (this *Job) Start() error {
-	if _, ok := jobStatus[this.Id]; ok {
+	if _, ok := Websql.jobStatus[this.Id]; ok {
 		return errors.New("Job already started: " + this.Id)
 	}
 	err := this.Reload()
 	if err != nil {
 		return err
 	}
-	jobRuntimeId, err := Sched.AddFunc(this.Cron, this.Action("sql"))
+	jobRuntimeId, err := Websql.Sched.AddFunc(this.Cron, this.Action("sql"))
 	if err != nil {
 		return err
 	}
-	jobStatus[this.Id] = jobRuntimeId
+	Websql.jobStatus[this.Id] = jobRuntimeId
 	return nil
 }
 func (this *Job) Restart() error {
@@ -142,16 +142,16 @@ func (this *Job) Restart() error {
 	return this.Start()
 }
 func (this *Job) Stop() error {
-	if jobRuntimeId, ok := jobStatus[this.Id]; ok {
-		Sched.RemoveFunc(jobRuntimeId)
-		delete(jobStatus, this.Id)
+	if jobRuntimeId, ok := Websql.jobStatus[this.Id]; ok {
+		Websql.Sched.RemoveFunc(jobRuntimeId)
+		delete(Websql.jobStatus, this.Id)
 	} else {
 		return errors.New("Job not started: " + this.Id)
 	}
 	return nil
 }
 func (this *Job) Started() bool {
-	if _, ok := jobStatus[this.Id]; ok {
+	if _, ok := Websql.jobStatus[this.Id]; ok {
 		return true
 	} else {
 		return false
@@ -160,9 +160,9 @@ func (this *Job) Started() bool {
 
 func (this *Job) Reload() error {
 	var app *App = nil
-	for iApp, vApp := range masterData.Apps {
+	for iApp, vApp := range Websql.masterData.Apps {
 		if this.AppId == vApp.Id {
-			app = masterData.Apps[iApp]
+			app = Websql.masterData.Apps[iApp]
 			break
 		}
 	}

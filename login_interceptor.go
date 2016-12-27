@@ -9,7 +9,7 @@ import (
 
 func init() {
 	tableId := "login"
-	RegisterDataInterceptor(tableId, 0, &LoginInterceptor{Id: tableId})
+	Websql.interceptors.RegisterDataInterceptor(tableId, 0, &LoginInterceptor{Id: tableId})
 }
 
 type LoginInterceptor struct {

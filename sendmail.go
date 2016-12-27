@@ -8,7 +8,7 @@ import (
 )
 
 func SendMail(subject, body string, to ...string) error {
-	return sendMail(service.MailHost, strconv.Itoa(service.MailPort), service.MailUsername, service.MailPassword, subject, body, "uprun@uprun.io", to...)
+	return sendMail(Websql.service.MailHost, strconv.Itoa(Websql.service.MailPort), Websql.service.MailUsername, Websql.service.MailPassword, subject, body, "uprun@uprun.io", to...)
 }
 
 func sendMail(host, port, username, password, subject, body, from string, to ...string) error {

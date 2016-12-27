@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/elgs/cron"
 	"github.com/elgs/gostrgen"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
@@ -20,20 +21,54 @@ import (
 	"github.com/urfave/cli"
 )
 
-var slaveConn *websocket.Conn
+var Websql *WebSQL
 
-var wsConns = make(map[string]*websocket.Conn)
-var masterData MasterData
-var apiNodes []*ApiNode
+type WebSQL struct {
+	slaveConn    *websocket.Conn
+	wsConns      map[string]*websocket.Conn
+	masterData   *MasterData
+	apiNodes     []*ApiNode
+	service      *CliService
+	Sched        *cron.Cron
+	jobStatus    map[string]int
+	interceptors *Interceptors
+	handlers     *Handlers
+	getDbo       func(id string) (DataOperator, error)
+}
+
+func (this *WebSQL) New() {
+	Websql = this
+	this.service = &CliService{
+		EnableHttp: true,
+		HttpHost:   "127.0.0.1",
+	}
+	this.wsConns = make(map[string]*websocket.Conn)
+	this.jobStatus = make(map[string]int)
+	this.interceptors = &Interceptors{
+		GlobalDataInterceptorRegistry:    map[int]DataInterceptor{},
+		DataInterceptorRegistry:          map[string]map[int]DataInterceptor{},
+		GlobalHandlerInterceptorRegistry: []HandlerInterceptor{},
+		HandlerInterceptorRegistry:       map[string]HandlerInterceptor{},
+	}
+	this.handlers = &Handlers{
+		handlerRegistry: make(map[string]func(w http.ResponseWriter, r *http.Request)),
+		DboRegistry:     make(map[string]DataOperator),
+	}
+}
+
+//var slaveConn *websocket.Conn
+//var wsConns = make(map[string]*websocket.Conn)
+//var masterData MasterData
+//var apiNodes []*ApiNode
 var pwd string
 var homeDir string
 
-var service = &CliService{
-	EnableHttp: true,
-	HttpHost:   "127.0.0.1",
-}
+//var service = &CliService{
+//	EnableHttp: true,
+//	HttpHost:   "127.0.0.1",
+//}
 
-func main() {
+func (this *WebSQL) Start() {
 	// read config file
 	usr, err := user.Current()
 	if err != nil {
@@ -64,7 +99,7 @@ func main() {
 	}()
 
 	app := cli.NewApp()
-	app.Name = "netdata"
+	app.Name = "websql"
 	app.Usage = "An SQL backend for the web."
 	app.Version = "0.0.1"
 
@@ -78,33 +113,33 @@ func main() {
 					Name:    "start",
 					Aliases: []string{"s"},
 					Usage:   "start service",
-					Flags:   service.Flags(),
+					Flags:   Websql.service.Flags(),
 					Action: func(c *cli.Context) error {
-						service.LoadConfigs(c)
-						if _, err := os.Stat(service.DataFile); os.IsNotExist(err) {
+						Websql.service.LoadConfigs(c)
+						if _, err := os.Stat(Websql.service.DataFile); os.IsNotExist(err) {
 							fmt.Println(err)
 						} else {
-							masterDataBytes, err := ioutil.ReadFile(service.DataFile)
+							masterDataBytes, err := ioutil.ReadFile(Websql.service.DataFile)
 							if err != nil {
 								return err
 							}
-							err = json.Unmarshal(masterDataBytes, &masterData)
+							err = json.Unmarshal(masterDataBytes, Websql.masterData)
 							if err != nil {
 								return err
 							}
 						}
 
-						GetDbo = MakeGetDbo("mysql", &masterData)
+						Websql.getDbo = MakeGetDbo("mysql", this.masterData)
 
-						if len(strings.TrimSpace(service.Master)) > 0 {
+						if len(strings.TrimSpace(Websql.service.Master)) > 0 {
 							// load data from master if slave
 							if RegisterToMaster(wsDrop) != nil {
 								return err
 							}
 						} else {
 							// load data from data file if master
-							StartJobs()
-							RegisterHandler("/sys/ws", func(w http.ResponseWriter, r *http.Request) {
+							this.StartJobs()
+							Websql.handlers.RegisterHandler("/sys/ws", func(w http.ResponseWriter, r *http.Request) {
 								conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 								if err != nil {
 									http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -124,9 +159,9 @@ func main() {
 												log.Println(err)
 											}
 											log.Println(c.RemoteAddr(), "dropped.")
-											for k, v := range wsConns {
+											for k, v := range Websql.wsConns {
 												if v == c {
-													delete(wsConns, k)
+													delete(Websql.wsConns, k)
 													break
 												}
 											}
@@ -142,7 +177,7 @@ func main() {
 							})
 						}
 						// shutdown
-						RegisterHandler("/sys/shutdown", func(w http.ResponseWriter, r *http.Request) {
+						Websql.handlers.RegisterHandler("/sys/shutdown", func(w http.ResponseWriter, r *http.Request) {
 							if strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
 								done <- true
 							} else {
@@ -150,15 +185,15 @@ func main() {
 							}
 						})
 						// cli
-						RegisterHandler("/sys/cli", func(w http.ResponseWriter, r *http.Request) {
+						Websql.handlers.RegisterHandler("/sys/cli", func(w http.ResponseWriter, r *http.Request) {
 							res, err := ioutil.ReadAll(r.Body)
 							if err != nil {
 								fmt.Fprint(w, err.Error())
 								return
 							}
-							if service.Master == "" {
+							if Websql.service.Master == "" {
 								// Master to process commands from cli interface.
-								result, err := processCliCommand(res)
+								result, err := Websql.processCliCommand(res)
 								if err != nil {
 									fmt.Fprint(w, err.Error())
 									return
@@ -168,7 +203,7 @@ func main() {
 								cliCommand := &Command{}
 								json.Unmarshal(res, cliCommand)
 								// Slave to forward cli command to master.
-								response, err := sendCliCommand(service.Master, cliCommand, false)
+								response, err := sendCliCommand(Websql.service.Master, cliCommand, false)
 								if err != nil {
 									fmt.Fprint(w, err.Error())
 									return
@@ -178,10 +213,10 @@ func main() {
 							}
 						})
 
-						RegisterHandler("/api", RestFunc)
+						Websql.handlers.RegisterHandler("/api", RestFunc)
 
 						// serve
-						serve(service)
+						serve(Websql.service)
 						<-done
 						fmt.Println("Bye!")
 						return nil
@@ -231,11 +266,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						full := c.IsSet("full")
 						compact := c.IsSet("compact")
@@ -298,11 +333,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						dataNode := &DataNode{
@@ -376,11 +411,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						dataNode := &DataNode{
 							Id:       c.String("id"),
@@ -446,11 +481,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := c.String("id")
 						cliDnRemoveCommand := &Command{
@@ -496,11 +531,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						full := c.IsSet("full")
 						compact := c.IsSet("compact")
@@ -550,11 +585,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 
 						name := c.String("name")
@@ -622,11 +657,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						app := &App{
 							Id:         c.String("id"),
@@ -680,11 +715,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := c.String("id")
 						cliAppRemoveCommand := &Command{
@@ -742,11 +777,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						query := &Query{
@@ -814,11 +849,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						query := &Query{
 							Id:         c.String("id"),
@@ -877,11 +912,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						appId := c.String("app")
 						cliQueryReloadAllCommand := &Command{
@@ -920,11 +955,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						query := &Query{
 							Id:    c.String("id"),
@@ -998,11 +1033,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						job := &Job{
@@ -1080,11 +1115,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						job := &Job{
 							Id:             c.String("id"),
@@ -1155,11 +1190,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						job := &Job{
 							Id:    c.String("id"),
@@ -1206,11 +1241,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						job := &Job{
 							Id:    c.String("id"),
@@ -1257,11 +1292,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						job := &Job{
 							Id:    c.String("id"),
@@ -1308,11 +1343,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						job := &Job{
 							Id:    c.String("id"),
@@ -1378,11 +1413,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						appId := c.String("app")
 						id := appId + strings.Replace(uuid.NewV4().String(), "-", "", -1)
@@ -1451,11 +1486,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						token := &Token{
 							Id:     c.String("id"),
@@ -1518,11 +1553,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						token := &Token{
 							Id:    c.String("id"),
@@ -1589,11 +1624,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						li := &LocalInterceptor{
@@ -1664,11 +1699,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						li := &LocalInterceptor{
 							Id:       c.String("id"),
@@ -1733,11 +1768,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						li := &LocalInterceptor{
 							Id:    c.String("id"),
@@ -1817,11 +1852,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						ri := &RemoteInterceptor{
@@ -1908,11 +1943,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						ri := &RemoteInterceptor{
 							Id:         c.String("id"),
@@ -1989,11 +2024,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						ri := &RemoteInterceptor{
 							Id:    c.String("id"),
@@ -2036,11 +2071,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						cliShowMasterCommand := &Command{
 							Type: "CLI_SHOW_MASTER",
@@ -2069,11 +2104,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						cliShowApiNodesCommand := &Command{
 							Type: "CLI_SHOW_API_NODES",
@@ -2109,11 +2144,11 @@ func main() {
 						cli.StringFlag{
 							Name:        "secret, z",
 							Usage:       "secret password for server client communication.",
-							Destination: &service.Secret,
+							Destination: &Websql.service.Secret,
 						},
 					},
 					Action: func(c *cli.Context) error {
-						service.LoadSecrets(c)
+						Websql.service.LoadSecrets(c)
 						node := c.String("node")
 						cliShowMasterCommand := &Command{
 							Type: "CLI_PROPAGATE",

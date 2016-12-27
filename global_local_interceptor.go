@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	RegisterGlobalDataInterceptor(10, &GlobalLocalInterceptor{Id: "GlobalLocalInterceptor"})
+	Websql.interceptors.RegisterGlobalDataInterceptor(10, &GlobalLocalInterceptor{Id: "GlobalLocalInterceptor"})
 }
 
 type GlobalLocalInterceptor struct {
@@ -16,7 +16,7 @@ type GlobalLocalInterceptor struct {
 }
 
 func (this *GlobalLocalInterceptor) executeLocalInterceptor(tx *sql.Tx, db *sql.DB, context map[string]interface{}, queryParams map[string]string, data [][]interface{}, appId string, resourceId string, li *LocalInterceptor) error {
-	sqlScript, err := getQueryText(appId, li.Callback)
+	sqlScript, err := Websql.getQueryText(appId, li.Callback)
 	if err != nil {
 		return err
 	}

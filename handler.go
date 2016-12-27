@@ -5,16 +5,21 @@ import (
 	"net/http"
 )
 
-var handlerRegistry = make(map[string]func(w http.ResponseWriter, r *http.Request))
-
-func RegisterHandler(id string, handler func(w http.ResponseWriter, r *http.Request)) {
-	handlerRegistry[id] = handler
+type Handlers struct {
+	handlerRegistry map[string]func(w http.ResponseWriter, r *http.Request)
+	DboRegistry     map[string]DataOperator
 }
 
-func GetHandler(id string) func(w http.ResponseWriter, r *http.Request) {
-	return handlerRegistry[id]
+//var handlerRegistry = make(map[string]func(w http.ResponseWriter, r *http.Request))
+
+func (this *Handlers) RegisterHandler(id string, handler func(w http.ResponseWriter, r *http.Request)) {
+	Websql.handlers.handlerRegistry[id] = handler
 }
 
-var DboRegistry = make(map[string]DataOperator)
+func (this *Handlers) GetHandler(id string) func(w http.ResponseWriter, r *http.Request) {
+	return Websql.handlers.handlerRegistry[id]
+}
 
-var GetDbo func(id string) (DataOperator, error)
+//var DboRegistry = make(map[string]DataOperator)
+
+//var GetDbo func(id string) (DataOperator, error)

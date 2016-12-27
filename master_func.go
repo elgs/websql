@@ -23,7 +23,7 @@ func processWsCommandMaster(conn *websocket.Conn, message []byte) error {
 			return err
 		}
 
-		if slaveService.Secret != service.Secret {
+		if slaveService.Secret != Websql.service.Secret {
 			conn.WriteJSON("Failed to valid client secret.")
 			return errors.New("Failed to valid client secret.")
 		}
@@ -38,7 +38,7 @@ func processWsCommandMaster(conn *websocket.Conn, message []byte) error {
 			return err
 		}
 
-		wsConns[slaveService.Id] = conn
+		Websql.wsConns[slaveService.Id] = conn
 		conn.WriteJSON("OK")
 		log.Println(conn.RemoteAddr(), "connected.")
 	}
@@ -54,7 +54,7 @@ func (this *MasterData) Propagate() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(service.DataFile, masterDataBytes, 0644)
+	err = ioutil.WriteFile(Websql.service.DataFile, masterDataBytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (this *MasterData) Propagate() error {
 		Type: "WS_MASTER_DATA",
 		Data: string(masterDataBytes),
 	}
-	for _, conn := range wsConns {
+	for _, conn := range Websql.wsConns {
 		err = conn.WriteJSON(masterDataCommand)
 		if err != nil {
 			log.Println(err)

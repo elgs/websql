@@ -7,22 +7,31 @@ import (
 	"strings"
 )
 
-var GlobalDataInterceptorRegistry = map[int]DataInterceptor{}
-
-var DataInterceptorRegistry = map[string]map[int]DataInterceptor{}
-var GlobalHandlerInterceptorRegistry = []HandlerInterceptor{}
-var HandlerInterceptorRegistry = map[string]HandlerInterceptor{}
-
-func RegisterDataInterceptor(id string, seq int, dataInterceptor DataInterceptor) {
-	id = strings.Replace(strings.ToUpper(id), "`", "", -1)
-	if DataInterceptorRegistry[id] == nil {
-		DataInterceptorRegistry[id] = make(map[int]DataInterceptor)
-	}
-	DataInterceptorRegistry[id][seq] = dataInterceptor
+type Interceptors struct {
+	GlobalDataInterceptorRegistry    map[int]DataInterceptor
+	DataInterceptorRegistry          map[string]map[int]DataInterceptor
+	GlobalHandlerInterceptorRegistry []HandlerInterceptor
+	HandlerInterceptorRegistry       map[string]HandlerInterceptor
 }
 
-func GetDataInterceptors(id string) (map[int]DataInterceptor, []int) {
-	interceptors := DataInterceptorRegistry[strings.ToUpper(strings.Replace(id, "`", "", -1))]
+type DefaultDataInterceptor struct{}
+type DefaultHandlerInterceptor struct{}
+
+//var GlobalDataInterceptorRegistry = map[int]DataInterceptor{}
+//var DataInterceptorRegistry = map[string]map[int]DataInterceptor{}
+//var GlobalHandlerInterceptorRegistry = []HandlerInterceptor{}
+//var HandlerInterceptorRegistry = map[string]HandlerInterceptor{}
+
+func (this *Interceptors) RegisterDataInterceptor(id string, seq int, dataInterceptor DataInterceptor) {
+	id = strings.Replace(strings.ToUpper(id), "`", "", -1)
+	if this.DataInterceptorRegistry[id] == nil {
+		this.DataInterceptorRegistry[id] = make(map[int]DataInterceptor)
+	}
+	this.DataInterceptorRegistry[id][seq] = dataInterceptor
+}
+
+func (this *Interceptors) GetDataInterceptors(id string) (map[int]DataInterceptor, []int) {
+	interceptors := this.DataInterceptorRegistry[strings.ToUpper(strings.Replace(id, "`", "", -1))]
 	keys := make([]int, 0)
 	for k := range interceptors {
 		keys = append(keys, k)
@@ -31,17 +40,17 @@ func GetDataInterceptors(id string) (map[int]DataInterceptor, []int) {
 	return interceptors, keys
 }
 
-func RegisterGlobalDataInterceptor(seq int, globalDataInterceptor DataInterceptor) {
-	GlobalDataInterceptorRegistry[seq] = globalDataInterceptor
+func (this *Interceptors) RegisterGlobalDataInterceptor(seq int, globalDataInterceptor DataInterceptor) {
+	this.GlobalDataInterceptorRegistry[seq] = globalDataInterceptor
 }
 
-func GetGlobalDataInterceptors() (map[int]DataInterceptor, []int) {
+func (this *Interceptors) GetGlobalDataInterceptors() (map[int]DataInterceptor, []int) {
 	keys := make([]int, 0)
-	for k := range GlobalDataInterceptorRegistry {
+	for k := range this.GlobalDataInterceptorRegistry {
 		keys = append(keys, k)
 	}
 	sort.Ints(keys)
-	return GlobalDataInterceptorRegistry, keys
+	return this.GlobalDataInterceptorRegistry, keys
 }
 
 type DataInterceptor interface {
@@ -67,9 +76,6 @@ type HandlerInterceptor interface {
 	BeforeHandle(w http.ResponseWriter, r *http.Request) error
 	AfterHandle(w http.ResponseWriter, r *http.Request) error
 }
-
-type DefaultDataInterceptor struct{}
-type DefaultHandlerInterceptor struct{}
 
 func (this *DefaultDataInterceptor) BeforeLoad(resourceId string, db *sql.DB, fields string, context map[string]interface{}, id string) error {
 	return nil

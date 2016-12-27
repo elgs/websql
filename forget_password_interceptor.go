@@ -7,7 +7,7 @@ import (
 
 func init() {
 	tableId := "forget_password"
-	RegisterDataInterceptor(tableId, 0, &ForgetPasswordInterceptor{Id: tableId})
+	Websql.interceptors.RegisterDataInterceptor(tableId, 0, &ForgetPasswordInterceptor{Id: tableId})
 }
 
 type ForgetPasswordInterceptor struct {

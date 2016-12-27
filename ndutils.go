@@ -246,7 +246,7 @@ func isQuery(sql string) bool {
 }
 
 func createJwtToken(payload string) (string, error) {
-	key := []byte(service.Secret)
+	key := []byte(Websql.service.Secret)
 	token, err := jose.Sign(payload, jose.HS256, key)
 	return token, err
 }

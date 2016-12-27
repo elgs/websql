@@ -19,11 +19,11 @@ func NewDbo(ds, dbType string) DataOperator {
 	}
 }
 
-func getQueryText(projectId, queryName string) (string, error) {
+func (this *WebSQL) getQueryText(projectId, queryName string) (string, error) {
 	var app *App = nil
-	for iApp, vApp := range masterData.Apps {
+	for iApp, vApp := range Websql.masterData.Apps {
 		if projectId == vApp.Id {
-			app = masterData.Apps[iApp]
+			app = Websql.masterData.Apps[iApp]
 			break
 		}
 	}
@@ -43,7 +43,7 @@ func getQueryText(projectId, queryName string) (string, error) {
 func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryParams map[string]string, array bool, context map[string]interface{}) ([][]interface{}, error) {
 	projectId := context["app_id"].(string)
 	theCase := context["case"].(string)
-	sqlScript, err := getQueryText(projectId, tableId)
+	sqlScript, err := Websql.getQueryText(projectId, tableId)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryPa
 		return nil, err
 	}
 
-	globalDataInterceptors, globalSortedKeys := GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeExec(tableId, scripts, &params, queryParams, array, db, context)
@@ -66,7 +66,7 @@ func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryPa
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {
@@ -103,7 +103,7 @@ func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryPa
 
 func MakeGetDbo(dbType string, masterData *MasterData) func(id string) (DataOperator, error) {
 	return func(id string) (DataOperator, error) {
-		ret := DboRegistry[id]
+		ret := Websql.handlers.DboRegistry[id]
 		if ret != nil {
 			return ret, nil
 		}
@@ -133,7 +133,7 @@ func MakeGetDbo(dbType string, masterData *MasterData) func(id string) (DataOper
 
 		ds := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", app.DbName, id, dn.Host, dn.Port, "nd_"+app.DbName)
 		ret = NewDbo(ds, dbType)
-		DboRegistry[id] = ret
+		Websql.handlers.DboRegistry[id] = ret
 		return ret, nil
 	}
 }
