@@ -66,23 +66,23 @@ func (this *CliService) Flags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:        "cert_file, c",
-			Usage:       "cert file path, search path: ~/.netdata/cert.crt, /etc/netdata/cert.crt",
+			Usage:       "cert file path, search path: ~/." + Websql.AppName + "/cert.crt, /etc/" + Websql.AppName + "/cert.crt",
 			Destination: &this.CertFile,
 		},
 		cli.StringFlag{
 			Name:        "key_file, k",
-			Usage:       "key file path, search path: ~/.netdata/key.key, /etc/netdata/key.key",
+			Usage:       "key file path, search path: ~/." + Websql.AppName + "/key.key, /etc/" + Websql.AppName + "/key.key",
 			Destination: &this.KeyFile,
 		},
 		cli.StringFlag{
 			Name:        "conf_file, C",
-			Usage:       "configuration file path, search path: ~/.netdata/netdata.json, /etc/netdata/netdata.json",
+			Usage:       "configuration file path, search path: ~/." + Websql.AppName + "/" + Websql.AppName + ".json, /etc/" + Websql.AppName + "/" + Websql.AppName + ".json",
 			Destination: &this.ConfFile,
 		},
 		cli.StringFlag{
 			Name:        "data_file, d",
-			Value:       homeDir + "/.netdata/netdata_master.json",
-			Usage:       "master data file path, ignored by slave nodes, search path: ~/.netdata/netdata_master.json",
+			Value:       homeDir + "/." + Websql.AppName + "/" + Websql.AppName + "_master.json",
+			Usage:       "master data file path, ignored by slave nodes, search path: ~/." + Websql.AppName + "/" + Websql.AppName + "_master.json",
 			Destination: &this.DataFile,
 		},
 		cli.StringFlag{
@@ -94,9 +94,9 @@ func (this *CliService) Flags() []cli.Flag {
 }
 
 func (this *CliService) LoadConfigs(c *cli.Context) {
-	this.LoadConfig("/etc/netdata/netdata.json", c)
-	this.LoadConfig(homeDir+"/.netdata/netdata.json", c)
-	this.LoadConfig(pwd+"/netdata.json", c)
+	this.LoadConfig("/etc/"+Websql.AppName+"/"+Websql.AppName+".json", c)
+	this.LoadConfig(homeDir+"/."+Websql.AppName+"/"+Websql.AppName+".json", c)
+	this.LoadConfig(pwd+"/"+Websql.AppName+".json", c)
 	this.LoadConfig(this.ConfFile, c)
 	if strings.TrimSpace(this.Id) == "" {
 		this.Id = strings.Replace(uuid.NewV4().String(), "-", "", -1)
@@ -104,9 +104,9 @@ func (this *CliService) LoadConfigs(c *cli.Context) {
 }
 
 func (this *CliService) LoadSecrets(c *cli.Context) {
-	this.LoadSecret("/etc/netdata/netdata.json", c)
-	this.LoadSecret(homeDir+"/.netdata/netdata.json", c)
-	this.LoadSecret(pwd+"/netdata.json", c)
+	this.LoadSecret("/etc/"+Websql.AppName+"/"+Websql.AppName+".json", c)
+	this.LoadSecret(homeDir+"/."+Websql.AppName+"/"+Websql.AppName+".json", c)
+	this.LoadSecret(pwd+"/"+Websql.AppName+".json", c)
 	this.LoadSecret(this.ConfFile, c)
 }
 

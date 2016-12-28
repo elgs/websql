@@ -172,7 +172,7 @@ func (this *Job) Reload() error {
 	}
 	if strings.TrimSpace(this.ScriptPath) == "" {
 		jFileFound := false
-		jFileName := ".netdata/" + app.Name + "/" + this.Name
+		jFileName := "." + Websql.AppName + "/" + app.Name + "/" + this.Name
 		if _, err := os.Stat(homeDir + "/" + jFileName); !os.IsNotExist(err) {
 			jFileName = homeDir + "/" + jFileName
 			jFileFound = true
@@ -209,7 +209,7 @@ func (this *Job) Reload() error {
 
 	if strings.TrimSpace(this.LoopScriptPath) == "" {
 		jFileFound := false
-		jFileName := ".netdata/" + app.Name + "/" + this.Name + "_loop"
+		jFileName := "." + Websql.AppName + "/" + app.Name + "/" + this.Name + "_loop"
 		if _, err := os.Stat(homeDir + "/" + jFileName); !os.IsNotExist(err) {
 			jFileName = homeDir + "/" + jFileName
 			jFileFound = true

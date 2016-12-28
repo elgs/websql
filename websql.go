@@ -22,6 +22,9 @@ import (
 )
 
 var Websql *WebSQL = &WebSQL{
+	AppName:        "websql",
+	AppDescription: "An SQL backend for the web.",
+	AppVersion:     "0.0.1",
 	interceptors: &Interceptors{
 		GlobalDataInterceptorRegistry:    map[int]DataInterceptor{},
 		DataInterceptorRegistry:          map[string]map[int]DataInterceptor{},
@@ -41,16 +44,19 @@ var Websql *WebSQL = &WebSQL{
 }
 
 type WebSQL struct {
-	slaveConn    *websocket.Conn
-	wsConns      map[string]*websocket.Conn
-	masterData   *MasterData
-	apiNodes     []*ApiNode
-	service      *CliService
-	Sched        *cron.Cron
-	jobStatus    map[string]int
-	interceptors *Interceptors
-	handlers     *Handlers
-	getDbo       func(id string) (DataOperator, error)
+	AppName        string
+	AppDescription string
+	AppVersion     string
+	slaveConn      *websocket.Conn
+	wsConns        map[string]*websocket.Conn
+	masterData     *MasterData
+	apiNodes       []*ApiNode
+	service        *CliService
+	Sched          *cron.Cron
+	jobStatus      map[string]int
+	interceptors   *Interceptors
+	handlers       *Handlers
+	getDbo         func(id string) (DataOperator, error)
 }
 
 //var slaveConn *websocket.Conn
@@ -96,9 +102,9 @@ func Start() {
 	}()
 
 	app := cli.NewApp()
-	app.Name = "websql"
-	app.Usage = "An SQL backend for the web."
-	app.Version = "0.0.1"
+	app.Name = Websql.AppName
+	app.Usage = Websql.AppDescription
+	app.Version = Websql.AppVersion
 
 	app.Commands = []cli.Command{
 		{
@@ -231,7 +237,7 @@ func Start() {
 								return err
 							}
 						} else {
-							fmt.Println("Usage: netdata service stop <shutdown_port>")
+							fmt.Println("Usage: " + Websql.AppName + " service stop <shutdown_port>")
 						}
 						return nil
 					},

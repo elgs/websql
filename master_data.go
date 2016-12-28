@@ -704,7 +704,7 @@ func (this *Query) Reload() error {
 	}
 	if strings.TrimSpace(this.ScriptPath) == "" {
 		qFileFound := false
-		qFileName := ".netdata/" + app.Name + "/" + this.Name
+		qFileName := "." + Websql.AppName + "/" + app.Name + "/" + this.Name
 		if _, err := os.Stat(homeDir + "/" + qFileName); !os.IsNotExist(err) {
 			qFileName = homeDir + "/" + qFileName
 			qFileFound = true
