@@ -39,8 +39,10 @@ var Websql *WebSQL = &WebSQL{
 		EnableHttp: true,
 		HttpHost:   "127.0.0.1",
 	},
-	wsConns:   make(map[string]*websocket.Conn),
-	jobStatus: make(map[string]int),
+	wsConns:    make(map[string]*websocket.Conn),
+	jobStatus:  make(map[string]int),
+	masterData: &MasterData{},
+	Sched:      cron.New(),
 }
 
 type WebSQL struct {

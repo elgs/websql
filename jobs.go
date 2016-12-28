@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elgs/cron"
 	"github.com/elgs/gosplitargs"
 	"github.com/elgs/gosqljson"
 )
@@ -104,7 +103,6 @@ func (this *Job) Action(mode string) func() {
 //var jobStatus = make(map[string]int)
 
 func (this *WebSQL) StartJobs() {
-	this.Sched = cron.New()
 	for _, app := range this.masterData.Apps {
 		for _, job := range app.Jobs {
 			if job.AutoStart == 1 {
