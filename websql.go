@@ -71,7 +71,9 @@ var homeDir string
 //	HttpHost:   "127.0.0.1",
 //}
 
-func Start() {
+func Run(appName string, appVersion string) {
+	Websql.AppName = appName
+	Websql.AppVersion = appVersion
 	// read config file
 	usr, err := user.Current()
 	if err != nil {
