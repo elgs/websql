@@ -21,7 +21,24 @@ import (
 	"github.com/urfave/cli"
 )
 
-var Websql *WebSQL
+var Websql *WebSQL = &WebSQL{
+	interceptors: &Interceptors{
+		GlobalDataInterceptorRegistry:    map[int]DataInterceptor{},
+		DataInterceptorRegistry:          map[string]map[int]DataInterceptor{},
+		GlobalHandlerInterceptorRegistry: []HandlerInterceptor{},
+		HandlerInterceptorRegistry:       map[string]HandlerInterceptor{},
+	},
+	handlers: &Handlers{
+		handlerRegistry: make(map[string]func(w http.ResponseWriter, r *http.Request)),
+		DboRegistry:     make(map[string]DataOperator),
+	},
+	service: &CliService{
+		EnableHttp: true,
+		HttpHost:   "127.0.0.1",
+	},
+	wsConns:   make(map[string]*websocket.Conn),
+	jobStatus: make(map[string]int),
+}
 
 type WebSQL struct {
 	slaveConn    *websocket.Conn
@@ -36,26 +53,6 @@ type WebSQL struct {
 	getDbo       func(id string) (DataOperator, error)
 }
 
-func (this *WebSQL) New() {
-	Websql = this
-	this.service = &CliService{
-		EnableHttp: true,
-		HttpHost:   "127.0.0.1",
-	}
-	this.wsConns = make(map[string]*websocket.Conn)
-	this.jobStatus = make(map[string]int)
-	this.interceptors = &Interceptors{
-		GlobalDataInterceptorRegistry:    map[int]DataInterceptor{},
-		DataInterceptorRegistry:          map[string]map[int]DataInterceptor{},
-		GlobalHandlerInterceptorRegistry: []HandlerInterceptor{},
-		HandlerInterceptorRegistry:       map[string]HandlerInterceptor{},
-	}
-	this.handlers = &Handlers{
-		handlerRegistry: make(map[string]func(w http.ResponseWriter, r *http.Request)),
-		DboRegistry:     make(map[string]DataOperator),
-	}
-}
-
 //var slaveConn *websocket.Conn
 //var wsConns = make(map[string]*websocket.Conn)
 //var masterData MasterData
@@ -68,7 +65,7 @@ var homeDir string
 //	HttpHost:   "127.0.0.1",
 //}
 
-func (this *WebSQL) Start() {
+func Start() {
 	// read config file
 	usr, err := user.Current()
 	if err != nil {
@@ -129,7 +126,7 @@ func (this *WebSQL) Start() {
 							}
 						}
 
-						Websql.getDbo = MakeGetDbo("mysql", this.masterData)
+						Websql.getDbo = MakeGetDbo("mysql", Websql.masterData)
 
 						if len(strings.TrimSpace(Websql.service.Master)) > 0 {
 							// load data from master if slave
@@ -138,7 +135,7 @@ func (this *WebSQL) Start() {
 							}
 						} else {
 							// load data from data file if master
-							this.StartJobs()
+							Websql.StartJobs()
 							Websql.handlers.RegisterHandler("/sys/ws", func(w http.ResponseWriter, r *http.Request) {
 								conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 								if err != nil {
