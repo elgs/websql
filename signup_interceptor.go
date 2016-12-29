@@ -7,7 +7,7 @@ import (
 
 func init() {
 	tableId := "signup"
-	Websql.interceptors.RegisterDataInterceptor(tableId, 0, &SginupInterceptor{Id: tableId})
+	Websql.Interceptors.RegisterDataInterceptor(tableId, 0, &SginupInterceptor{Id: tableId})
 }
 
 type SginupInterceptor struct {

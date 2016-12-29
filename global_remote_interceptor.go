@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	Websql.interceptors.RegisterGlobalDataInterceptor(20, &GlobalRemoteInterceptor{Id: "GlobalRemoteInterceptor"})
+	Websql.Interceptors.RegisterGlobalDataInterceptor(20, &GlobalRemoteInterceptor{Id: "GlobalRemoteInterceptor"})
 }
 
 type GlobalRemoteInterceptor struct {

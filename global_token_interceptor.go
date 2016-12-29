@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	Websql.interceptors.RegisterGlobalDataInterceptor(0, &GlobalTokenInterceptor{Id: "GlobalTokenInterceptor"})
+	Websql.Interceptors.RegisterGlobalDataInterceptor(0, &GlobalTokenInterceptor{Id: "GlobalTokenInterceptor"})
 }
 
 type GlobalTokenInterceptor struct {

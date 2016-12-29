@@ -58,7 +58,7 @@ func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryPa
 		return nil, err
 	}
 
-	globalDataInterceptors, globalSortedKeys := Websql.interceptors.GetGlobalDataInterceptors()
+	globalDataInterceptors, globalSortedKeys := Websql.Interceptors.GetGlobalDataInterceptors()
 	for _, k := range globalSortedKeys {
 		globalDataInterceptor := globalDataInterceptors[k]
 		err := globalDataInterceptor.BeforeExec(tableId, scripts, &params, queryParams, array, db, context)
@@ -66,7 +66,7 @@ func (this *NdDataOperator) Exec(tableId string, params [][]interface{}, queryPa
 			return nil, err
 		}
 	}
-	dataInterceptors, sortedKeys := Websql.interceptors.GetDataInterceptors(tableId)
+	dataInterceptors, sortedKeys := Websql.Interceptors.GetDataInterceptors(tableId)
 	for _, k := range sortedKeys {
 		dataInterceptor := dataInterceptors[k]
 		if dataInterceptor != nil {

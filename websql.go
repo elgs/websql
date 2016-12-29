@@ -25,7 +25,7 @@ var Websql *WebSQL = &WebSQL{
 	AppName:        "websql",
 	AppDescription: "An SQL backend for the web.",
 	AppVersion:     "0.0.1",
-	interceptors: &Interceptors{
+	Interceptors: &Interceptors{
 		GlobalDataInterceptorRegistry:    map[int]DataInterceptor{},
 		DataInterceptorRegistry:          map[string]map[int]DataInterceptor{},
 		GlobalHandlerInterceptorRegistry: []HandlerInterceptor{},
@@ -56,7 +56,7 @@ type WebSQL struct {
 	service        *CliService
 	Sched          *cron.Cron
 	jobStatus      map[string]int
-	interceptors   *Interceptors
+	Interceptors   *Interceptors
 	handlers       *Handlers
 	getDbo         func(id string) (DataOperator, error)
 }

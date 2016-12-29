@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Websql.interceptors.RegisterGlobalDataInterceptor(10, &GlobalLocalInterceptor{Id: "GlobalLocalInterceptor"})
+	Websql.Interceptors.RegisterGlobalDataInterceptor(10, &GlobalLocalInterceptor{Id: "GlobalLocalInterceptor"})
 }
 
 type GlobalLocalInterceptor struct {

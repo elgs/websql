@@ -29,14 +29,14 @@ func serve(service *CliService) {
 			http.Error(w, "Not found.", http.StatusNotFound)
 			return
 		}
-		for _, globalHandlerInterceptor := range Websql.interceptors.GlobalHandlerInterceptorRegistry {
+		for _, globalHandlerInterceptor := range Websql.Interceptors.GlobalHandlerInterceptorRegistry {
 			err := globalHandlerInterceptor.BeforeHandle(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
-		handlerInterceptor := Websql.interceptors.HandlerInterceptorRegistry[urlPath]
+		handlerInterceptor := Websql.Interceptors.HandlerInterceptorRegistry[urlPath]
 		if handlerInterceptor != nil {
 			err := handlerInterceptor.BeforeHandle(w, r)
 			if err != nil {
@@ -52,7 +52,7 @@ func serve(service *CliService) {
 				return
 			}
 		}
-		for _, globalHandlerInterceptor := range Websql.interceptors.GlobalHandlerInterceptorRegistry {
+		for _, globalHandlerInterceptor := range Websql.Interceptors.GlobalHandlerInterceptorRegistry {
 			err := globalHandlerInterceptor.AfterHandle(w, r)
 			if err != nil {
 				fmt.Fprint(w, err.Error())
