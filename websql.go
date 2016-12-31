@@ -123,18 +123,6 @@ func Run(appName string, appVersion string) {
 					Flags:   Websql.service.Flags(),
 					Action: func(c *cli.Context) error {
 						Websql.service.LoadConfigs(c)
-						if _, err := os.Stat(Websql.service.DataFile); os.IsNotExist(err) {
-							fmt.Println(err)
-						} else {
-							masterDataBytes, err := ioutil.ReadFile(Websql.service.DataFile)
-							if err != nil {
-								return err
-							}
-							err = json.Unmarshal(masterDataBytes, Websql.masterData)
-							if err != nil {
-								return err
-							}
-						}
 
 						Websql.getDbo = MakeGetDbo("mysql", Websql.masterData)
 
@@ -145,6 +133,19 @@ func Run(appName string, appVersion string) {
 							}
 						} else {
 							// load data from data file if master
+							if _, err := os.Stat(Websql.service.DataFile); os.IsNotExist(err) {
+								fmt.Println(err)
+							} else {
+								masterDataBytes, err := ioutil.ReadFile(Websql.service.DataFile)
+								if err != nil {
+									return err
+								}
+								err = json.Unmarshal(masterDataBytes, Websql.masterData)
+								if err != nil {
+									return err
+								}
+							}
+
 							Websql.StartJobs()
 							Websql.handlers.RegisterHandler("/sys/ws", func(w http.ResponseWriter, r *http.Request) {
 								conn, err := websocket.Upgrade(w, r, nil, 1024, 1024)
@@ -175,7 +176,7 @@ func Run(appName string, appVersion string) {
 											break
 										}
 										// Master to process command from client web socket channels.
-										err = processWsCommandMaster(c, message)
+										err = Websql.processWsCommandMaster(c, message)
 										if err != nil {
 											log.Println(err)
 										}
@@ -200,6 +201,7 @@ func Run(appName string, appVersion string) {
 							}
 							if Websql.service.Master == "" {
 								// Master to process commands from cli interface.
+								//								log.Println("I'm master")
 								result, err := Websql.processCliCommand(res)
 								if err != nil {
 									fmt.Fprint(w, err.Error())
@@ -207,6 +209,7 @@ func Run(appName string, appVersion string) {
 								}
 								fmt.Fprint(w, result)
 							} else {
+								//								log.Println("I'm slave")
 								cliCommand := &Command{}
 								json.Unmarshal(res, cliCommand)
 								// Slave to forward cli command to master.

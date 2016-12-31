@@ -110,6 +110,7 @@ func processWsCommandSlave(conn *websocket.Conn, message []byte) error {
 		if err != nil {
 			return err
 		}
+		log.Println("Master data updated.")
 		return json.Unmarshal([]byte(masterCommand.Data), Websql.masterData)
 	}
 	return nil

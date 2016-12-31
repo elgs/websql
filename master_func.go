@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func processWsCommandMaster(conn *websocket.Conn, message []byte) error {
+func (this *WebSQL) processWsCommandMaster(conn *websocket.Conn, message []byte) error {
 	wsCommand := &Command{}
 	json.Unmarshal(message, wsCommand)
 	switch wsCommand.Type {
@@ -41,6 +41,22 @@ func processWsCommandMaster(conn *websocket.Conn, message []byte) error {
 		Websql.wsConns[slaveService.Id] = conn
 		conn.WriteJSON("OK")
 		log.Println(conn.RemoteAddr(), "connected.")
+
+		masterDataBytes, err := json.Marshal(this.masterData)
+		if err != nil {
+			conn.Close()
+			return err
+		}
+		masterDataCommand := &Command{
+			Type: "WS_MASTER_DATA",
+			Data: string(masterDataBytes),
+		}
+		err = conn.WriteJSON(masterDataCommand)
+		if err != nil {
+			conn.Close()
+			return err
+		}
+		log.Println(conn.RemoteAddr(), "master data sent.")
 	}
 	return nil
 }
