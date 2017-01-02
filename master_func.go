@@ -21,6 +21,7 @@ func (this *WebSQL) processWsCommandMaster(conn *websocket.Conn, message []byte)
 			Data: "Failed to valid client secret.",
 		}
 		conn.WriteJSON(regCommand)
+		conn.Close()
 		return errors.New(regCommand.Data)
 	}
 
