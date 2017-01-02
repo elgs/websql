@@ -14,32 +14,36 @@ import (
 func (this *WebSQL) processWsCommandMaster(conn *websocket.Conn, message []byte) error {
 	wsCommand := &Command{}
 	json.Unmarshal(message, wsCommand)
+
+	if wsCommand.Secret != Websql.service.Secret {
+		regCommand := &Command{
+			Type: "WS_REGISTER",
+			Data: "Failed to valid client secret.",
+		}
+		conn.WriteJSON(regCommand)
+		return errors.New(regCommand.Data)
+	}
+
 	switch wsCommand.Type {
 	case "WS_REGISTER":
-		slaveService := &CliService{}
-		err := json.Unmarshal([]byte(wsCommand.Data), slaveService)
-		if err != nil {
-			conn.Close()
-			return err
-		}
-
-		if slaveService.Secret != Websql.service.Secret {
-			conn.WriteJSON("Failed to valid client secret.")
-			return errors.New("Failed to valid client secret.")
-		}
+		//		log.Println(string(message))
 
 		apiNode := &ApiNode{
-			Id:   slaveService.Id,
+			Id:   wsCommand.Data,
 			Name: conn.RemoteAddr().String(),
 		}
-		err = AddApiNode(apiNode)
+		err := AddApiNode(apiNode)
 		if err != nil {
 			conn.Close()
 			return err
 		}
 
-		Websql.wsConns[slaveService.Id] = conn
-		conn.WriteJSON("OK")
+		Websql.wsConns[apiNode.Id] = conn
+		regCommand := &Command{
+			Type: "WS_REGISTER",
+			Data: "OK",
+		}
+		conn.WriteJSON(regCommand)
 		log.Println(conn.RemoteAddr(), "connected.")
 
 		masterDataBytes, err := json.Marshal(this.masterData)

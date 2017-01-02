@@ -51,16 +51,10 @@ func RegisterToMaster(wsDrop chan bool) error {
 		return err
 	}
 
-	serviceBytes, err := json.Marshal(Websql.service)
-	if err != nil {
-		log.Println(err)
-		time.Sleep(time.Second * 5)
-		wsDrop <- true
-		return err
-	}
 	regCommand := Command{
-		Type: "WS_REGISTER",
-		Data: string(serviceBytes),
+		Type:   "WS_REGISTER",
+		Data:   Websql.service.Id,
+		Secret: Websql.service.Secret,
 	}
 
 	// Register
@@ -70,11 +64,11 @@ func RegisterToMaster(wsDrop chan bool) error {
 		wsDrop <- true
 		return err
 	}
-	var regResult string
+	var regResult Command
 	c.ReadJSON(&regResult)
-	if regResult != "OK" {
+	if regResult.Type != "WS_REGISTER" || regResult.Data != "OK" {
 		log.Println(regResult)
-		return errors.New(regResult)
+		return errors.New(regResult.Data)
 	}
 
 	Websql.slaveConn = c
