@@ -148,22 +148,22 @@ func (this *MasterData) RemoveDataNode(id string) error {
 func (this *MasterData) UpdateDataNode(dataNode *DataNode) error {
 	for i, v := range this.DataNodes {
 		if v.Id == dataNode.Id {
-			if v.Name != "__not_set__" {
+			if dataNode.Name != "__not_set__" {
 				v.Name = dataNode.Name
 			}
-			if v.Host != "__not_set__" {
+			if dataNode.Host != "__not_set__" {
 				v.Host = dataNode.Host
 			}
-			if v.Port != -1 {
+			if dataNode.Port != -1 {
 				v.Port = dataNode.Port
 			}
-			if v.Username != "__not_set__" {
+			if dataNode.Username != "__not_set__" {
 				v.Username = dataNode.Username
 			}
-			if v.Password != "__not_set__" {
+			if dataNode.Password != "__not_set__" {
 				v.Password = dataNode.Password
 			}
-			if v.Note != "__not_set__" {
+			if dataNode.Note != "__not_set__" {
 				v.Note = dataNode.Note
 			}
 			this.DataNodes[i] = v
