@@ -349,9 +349,9 @@ func Run(appName string, appVersion string) {
 					Action: func(c *cli.Context) error {
 						Websql.service.LoadSecrets(c)
 						node := c.String("node")
-						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
+						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						dataNode := &DataNode{
-							Id:       id,
+							//							Id:       id,
 							Name:     c.String("name"),
 							Host:     c.String("host"),
 							Port:     c.Int("port"),

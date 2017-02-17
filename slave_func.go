@@ -25,6 +25,7 @@ func sendCliCommand(node string, command *Command, attachSecret bool) ([]byte, e
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	//	fmt.Println(string(message))
 	client := &http.Client{Transport: tr}
 	req, err := http.NewRequest("POST", "https://"+node+"/sys/cli", strings.NewReader(string(message)))
 	if err != nil {

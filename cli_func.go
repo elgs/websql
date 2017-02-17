@@ -4,6 +4,9 @@ package websql
 import (
 	"encoding/json"
 	"errors"
+	"strings"
+
+	"github.com/satori/go.uuid"
 )
 
 func (this *WebSQL) processCliCommand(message []byte) (string, error) {
@@ -21,6 +24,8 @@ func (this *WebSQL) processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
+		dataNode.Id = id
 		err = this.masterData.AddDataNode(dataNode)
 		if err != nil {
 			return "", err
