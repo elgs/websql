@@ -605,14 +605,14 @@ func Run(appName string, appVersion string) {
 						name := c.String("name")
 						namePrefix := name[:int(math.Min(float64(len(name)), 8))]
 
-						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
+						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						dbName, err := gostrgen.RandGen(16-len(namePrefix), gostrgen.LowerDigit, "", "")
 						if err != nil {
 							return err
 						}
 
 						app := &App{
-							Id:         id,
+							//							Id:         id,
 							Name:       name,
 							DataNodeId: c.String("datanode"),
 							DbName:     namePrefix + dbName,
