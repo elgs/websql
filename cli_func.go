@@ -63,7 +63,7 @@ func (this *WebSQL) processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		app.DbName = dbName
+		app.DbName = namePrefix + dbName
 		err = this.masterData.AddApp(app)
 		if err != nil {
 			return "", err
