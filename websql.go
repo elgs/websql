@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/elgs/cron"
-	"github.com/elgs/gostrgen"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
@@ -603,20 +601,20 @@ func Run(appName string, appVersion string) {
 						node := c.String("node")
 
 						name := c.String("name")
-						namePrefix := name[:int(math.Min(float64(len(name)), 8))]
+						//						namePrefix := name[:int(math.Min(float64(len(name)), 8))]
 
 						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
-						dbName, err := gostrgen.RandGen(16-len(namePrefix), gostrgen.LowerDigit, "", "")
-						if err != nil {
-							return err
-						}
+						//						dbName, err := gostrgen.RandGen(16-len(namePrefix), gostrgen.LowerDigit, "", "")
+						//						if err != nil {
+						//							return err
+						//						}
 
 						app := &App{
 							//							Id:         id,
 							Name:       name,
 							DataNodeId: c.String("datanode"),
-							DbName:     namePrefix + dbName,
-							Note:       c.String("note"),
+							//							DbName:     namePrefix + dbName,
+							Note: c.String("note"),
 						}
 						appJSONBytes, err := json.Marshal(app)
 						if err != nil {

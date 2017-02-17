@@ -4,8 +4,10 @@ package websql
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strings"
 
+	"github.com/elgs/gostrgen"
 	"github.com/satori/go.uuid"
 )
 
@@ -55,6 +57,13 @@ func (this *WebSQL) processCliCommand(message []byte) (string, error) {
 		}
 		id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 		app.Id = id
+		name := app.Name
+		namePrefix := name[:int(math.Min(float64(len(name)), 8))]
+		dbName, err := gostrgen.RandGen(16-len(namePrefix), gostrgen.LowerDigit, "", "")
+		if err != nil {
+			return "", err
+		}
+		app.DbName = dbName
 		err = this.masterData.AddApp(app)
 		if err != nil {
 			return "", err
