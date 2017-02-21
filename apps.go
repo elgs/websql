@@ -66,6 +66,7 @@ func (this *App) OnAppRemove() error {
 	// Drop database
 	_, err = gosqljson.ExecDb(appDb, "DROP DATABASE IF EXISTS nd_"+this.DbName)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 

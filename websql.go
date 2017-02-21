@@ -347,9 +347,7 @@ func Run(appName string, appVersion string) {
 					Action: func(c *cli.Context) error {
 						Websql.service.LoadSecrets(c)
 						node := c.String("node")
-						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						dataNode := &DataNode{
-							//							Id:       id,
 							Name:     c.String("name"),
 							Host:     c.String("host"),
 							Port:     c.Int("port"),
@@ -601,13 +599,6 @@ func Run(appName string, appVersion string) {
 						node := c.String("node")
 
 						name := c.String("name")
-						//						namePrefix := name[:int(math.Min(float64(len(name)), 8))]
-
-						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
-						//						dbName, err := gostrgen.RandGen(16-len(namePrefix), gostrgen.LowerDigit, "", "")
-						//						if err != nil {
-						//							return err
-						//						}
 
 						app := &App{
 							//							Id:         id,
@@ -791,9 +782,9 @@ func Run(appName string, appVersion string) {
 					Action: func(c *cli.Context) error {
 						Websql.service.LoadSecrets(c)
 						node := c.String("node")
-						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
+						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						query := &Query{
-							Id:         id,
+							//							Id:         id,
 							Name:       c.String("name"),
 							AppId:      c.String("app"),
 							ScriptPath: c.String("script"),

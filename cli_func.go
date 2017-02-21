@@ -89,6 +89,8 @@ func (this *WebSQL) processCliCommand(message []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
+		query.Id = id
 		err = this.masterData.AddQuery(query)
 		if err != nil {
 			return "", err
