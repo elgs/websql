@@ -782,9 +782,7 @@ func Run(appName string, appVersion string) {
 					Action: func(c *cli.Context) error {
 						Websql.service.LoadSecrets(c)
 						node := c.String("node")
-						//						id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 						query := &Query{
-							//							Id:         id,
 							Name:       c.String("name"),
 							AppId:      c.String("app"),
 							ScriptPath: c.String("script"),

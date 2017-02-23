@@ -295,9 +295,16 @@ func (this *MasterData) AddQuery(query *Query) error {
 				}
 			}
 			this.Apps[iApp].Queries = append(this.Apps[iApp].Queries, query)
-			err := query.Reload()
-			if err != nil {
-				return err
+			if query.ScriptText != "" {
+				err := query.Store()
+				if err != nil {
+					return err
+				}
+			} else {
+				err := query.Reload()
+				if err != nil {
+					return err
+				}
 			}
 			this.Version++
 			return Websql.masterData.Propagate()
@@ -340,10 +347,19 @@ func (this *MasterData) UpdateQuery(query *Query) error {
 						vQuery.Note = query.Note
 					}
 					this.Apps[iApp].Queries[iQuery] = vQuery
-					err := vQuery.Reload()
-					if err != nil {
-						return err
+
+					if vQuery.ScriptText != "" {
+						err := vQuery.Store()
+						if err != nil {
+							return err
+						}
+					} else {
+						err := vQuery.Reload()
+						if err != nil {
+							return err
+						}
 					}
+
 					this.Version++
 					return Websql.masterData.Propagate()
 				}
@@ -738,6 +754,57 @@ func (this *Query) Reload() error {
 			return errors.New("File not found: " + this.ScriptPath)
 		}
 		this.ScriptText = string(content)
+	}
+	return nil
+}
+
+func (this *Query) Store() error {
+	var app *App = nil
+	for iApp, vApp := range Websql.masterData.Apps {
+		if this.AppId == vApp.Id {
+			app = Websql.masterData.Apps[iApp]
+			break
+		}
+	}
+
+	if app == nil {
+		return errors.New("App not found: " + this.AppId)
+	}
+	if strings.TrimSpace(this.ScriptPath) == "" {
+		qFileFound := false
+		qFileName := "." + Websql.AppName + "/" + app.Name + "/" + this.Name
+		if _, err := os.Stat(homeDir + "/" + qFileName); !os.IsNotExist(err) {
+			qFileName = homeDir + "/" + qFileName
+			qFileFound = true
+		}
+		if _, err := os.Stat(pwd + "/" + qFileName); !os.IsNotExist(err) {
+			qFileName = pwd + "/" + qFileName
+			qFileFound = true
+		}
+
+		if !qFileFound {
+			qFileName += ".sql"
+			if _, err := os.Stat(homeDir + "/" + qFileName); !os.IsNotExist(err) {
+				qFileName = homeDir + "/" + qFileName
+				qFileFound = true
+			}
+			if _, err := os.Stat(pwd + "/" + qFileName); !os.IsNotExist(err) {
+				qFileName = pwd + "/" + qFileName
+				qFileFound = true
+			}
+		}
+
+		err := ioutil.WriteFile(qFileName, []byte(this.ScriptText), 0644)
+		if err != nil {
+			return errors.New("Failed to write query file: " + qFileName)
+		}
+
+		this.ScriptPath = qFileName
+	} else {
+		err := ioutil.WriteFile(this.ScriptPath, []byte(this.ScriptText), 0644)
+		if err != nil {
+			return errors.New("Failed to write query file: " + this.ScriptPath)
+		}
 	}
 	return nil
 }
