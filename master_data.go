@@ -343,6 +343,9 @@ func (this *MasterData) UpdateQuery(query *Query) error {
 					if query.Mode != "__not_set__" {
 						vQuery.Mode = query.Mode
 					}
+					if query.ScriptText != "" {
+						vQuery.ScriptText = query.ScriptText
+					}
 					if query.Note != "__not_set__" {
 						vQuery.Note = query.Note
 					}
